@@ -24,9 +24,12 @@ module.exports.register = async (req, res) => {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
+
+    delete user._doc.password;
+
     res.cookie("token", token);
 
-    res.send({ message: "User registered successfully" });
+    res.send({ token, newUser });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
@@ -50,9 +53,11 @@ module.exports.login = async (req, res) => {
       expiresIn: "1h",
     });
 
+    delete user._doc.password;
+
     res.cookie("token", token);
 
-    res.send({ message: "User logged in successfully" });
+    res.send({ token, user });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });
