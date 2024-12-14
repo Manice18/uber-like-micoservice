@@ -1,7 +1,11 @@
 const userModel = require("../models/user.models");
 const blacklisttokenModel = require("../models/blacklisttoken.model");
 const bcrypt = require("bcrypt");
+const EventEmitter = require("events");
 const jwt = require("jsonwebtoken");
+const { subscribeToQueue } = require("../service/rabbit");
+
+const rideEventEmitter = new EventEmitter();
 
 module.exports.register = async (req, res) => {
   try {
@@ -84,3 +88,18 @@ module.exports.profile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.acceptedRide = async (req, res) => {
+  rideEventEmitter.once("ride-accepted", (data) => {
+    res.send(data);
+  });
+
+  setTimeout(() => {
+    res.status(204).send();
+  }, 120000);
+};
+
+subscribeToQueue("ride-accepted", async (msg) => {
+  const data = JSON.parse(msg);
+  rideEventEmitter.emit("ride-accepted", data);
+});
